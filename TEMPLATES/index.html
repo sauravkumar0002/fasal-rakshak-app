@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fasal Rakshak | Smart Wheat Protection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .hero-bg { background-color: #f0fdf4; } /* Mint Green from your image */
+        .nav-link { color: #374151; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: #16a34a; }
+        .btn-filled { background-color: #16a34a; color: white; }
+        .btn-filled:hover { background-color: #15803d; }
+        .btn-outline { border: 1px solid #16a34a; color: #16a34a; }
+        .btn-outline:hover { background-color: #f0fdf4; }
+    </style>
+</head>
+<body class="bg-white text-gray-800">
+
+    <!-- Navbar (Matches your Screenshot) -->
+    <nav class="bg-white py-4 sticky top-0 z-50 border-b border-gray-100">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center gap-2 cursor-pointer" onclick="showSection('hero')">
+                <img src="https://placehold.co/40x40/16a34a/ffffff?text=FR" alt="Logo" class="w-10 h-10 rounded-full">
+                <div class="flex flex-col">
+                    <span class="text-green-700 font-bold text-lg leading-none">Fasal</span>
+                    <span class="text-green-700 font-bold text-lg leading-none">Rakshak</span>
+                </div>
+            </div>
+
+            <!-- Links -->
+            <div class="hidden lg:flex items-center gap-6 text-sm">
+                <button onclick="showSection('hero')" class="nav-link">Home</button>
+                <button onclick="showSection('scan')" class="nav-link">Scan Crop</button>
+                <button onclick="showSection('heatmap')" class="nav-link">Disease HeatMap</button>
+                <button onclick="showSection('geotag')" class="nav-link">GeoTag</button>
+                <button onclick="showSection('schemes')" class="nav-link">Schemes</button>
+                <button onclick="showSection('community')" class="nav-link">Community</button>
+                <button onclick="showSection('agricart')" class="nav-link">AgriCart</button>
+            </div>
+
+            <!-- Auth Buttons -->
+            <div class="hidden md:flex items-center gap-3">
+                <button class="btn-outline px-5 py-2 rounded-lg font-semibold">Sign In</button>
+                <button class="btn-filled px-5 py-2 rounded-lg font-semibold">Sign Up</button>
+                <button class="btn-outline px-3 py-2 rounded-lg text-sm flex items-center gap-1">
+                    English <i class="ph ph-caret-down"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 1. Hero Section -->
+    <section id="hero-section" class="hero-bg min-h-[85vh] flex items-center">
+        <div class="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <h1 class="text-5xl font-bold text-green-700 leading-tight mb-2">
+                    Fasal Rakshak — <br><span class="text-green-600">Smart Wheat Protection</span>
+                </h1>
+                <p class="text-gray-600 text-lg mt-4 mb-8">Detects early. Alerts instantly. Harvests securely.</p>
+                <div class="flex gap-4">
+                    <button onclick="showSection('scan')" class="btn-filled px-8 py-3 rounded-md font-semibold text-lg shadow-lg">Scan Crop</button>
+                    <button onclick="showSection('features')" class="btn-outline px-8 py-3 rounded-md font-semibold text-lg">Get Started</button>
+                </div>
+            </div>
+            <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=1000&auto=format&fit=crop" class="rounded-2xl shadow-2xl h-[500px] w-full object-cover">
+        </div>
+    </section>
+
+    <!-- 2. Scan Section -->
+    <section id="scan-section" class="hidden min-h-screen bg-gray-50 py-12">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden grid md:grid-cols-2">
+                <div class="p-8 border-r border-gray-100">
+                    <h2 class="text-2xl font-bold mb-4">AI Diagnosis</h2>
+                    <div id="drop-zone" class="border-2 border-dashed border-green-300 bg-green-50 p-10 text-center rounded-xl relative cursor-pointer">
+                        <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+                        <i class="ph ph-camera text-4xl text-green-600"></i>
+                        <p class="mt-2 font-semibold text-green-800">Upload Crop Image</p>
+                    </div>
+                    <img id="preview" class="mt-4 w-full h-48 object-cover rounded-lg hidden">
+                    <button id="analyze-btn" onclick="analyzeImage()" class="w-full mt-4 btn-filled py-3 rounded-lg font-bold disabled:opacity-50" disabled>Analyze</button>
+                </div>
+                <div class="p-8 bg-gray-50 relative">
+                    <h3 class="font-bold text-gray-700 mb-4">Results</h3>
+                    <div id="loading" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center"><div class="animate-spin rounded-full h-8 w-8 border-4 border-green-500 border-t-transparent"></div></div>
+                    <div id="result" class="hidden space-y-4">
+                        <div class="bg-white p-4 rounded border">
+                            <p class="text-xs text-gray-400 uppercase">Disease</p>
+                            <h4 id="res-disease" class="text-xl font-bold text-red-600">--</h4>
+                            <p id="res-conf" class="text-xs text-right text-gray-500">0% Confidence</p>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded border border-green-200">
+                            <p class="font-bold text-green-800"><i class="ph-fill ph-first-aid"></i> Treatment</p>
+                            <p id="res-treat" class="text-sm text-green-800 mt-1">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Heatmap & GeoTag Section -->
+    <section id="heatmap-section" class="hidden min-h-screen bg-gray-50 py-12">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-6">Disease Outbreak Map</h2>
+            <div id="map" class="bg-white rounded-xl shadow-xl h-[600px] w-full z-0"></div>
+        </div>
+    </section>
+
+    <section id="geotag-section" class="hidden min-h-screen bg-gray-50 py-12">
+         <div class="container mx-auto px-6 max-w-2xl text-center">
+            <h2 class="text-3xl font-bold mb-6">GeoTag My Farm</h2>
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <i class="ph-fill ph-map-pin text-6xl text-red-500 mb-4"></i>
+                <p class="text-xl mb-4">Current Location: <span id="location-display" class="font-mono bg-gray-100 px-2 rounded">Fetching...</span></p>
+                <button onclick="getLocation()" class="btn-filled px-6 py-3 rounded-lg">Update Location</button>
+            </div>
+         </div>
+    </section>
+
+    <!-- 4. Community Section -->
+    <section id="community-section" class="hidden min-h-screen bg-gray-50 py-12">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <h2 class="text-3xl font-bold mb-6">Farmer Community</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-4 rounded-lg shadow flex gap-4">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">R</div>
+                    <div>
+                        <h4 class="font-bold">Ramesh Kumar</h4>
+                        <p class="text-gray-600">My wheat leaves are turning yellow at the tips. Is this normal?</p>
+                        <div class="mt-2 flex gap-4 text-sm text-gray-400">
+                            <span><i class="ph ph-thumbs-up"></i> 12 Likes</span>
+                            <span><i class="ph ph-chat-circle"></i> 4 Replies</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow flex gap-4">
+                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">S</div>
+                    <div>
+                        <h4 class="font-bold">Suresh Singh</h4>
+                        <p class="text-gray-600">Best price for Urea in Punjab right now?</p>
+                        <div class="mt-2 flex gap-4 text-sm text-gray-400">
+                            <span><i class="ph ph-thumbs-up"></i> 8 Likes</span>
+                            <span><i class="ph ph-chat-circle"></i> 12 Replies</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. AgriCart Section -->
+    <section id="agricart-section" class="hidden min-h-screen bg-gray-50 py-12">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-6">AgriCart Marketplace</h2>
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition cursor-pointer">
+                    <img src="https://placehold.co/200x200?text=Urea" class="rounded-lg mb-4 w-full h-40 object-cover">
+                    <h4 class="font-bold">Neem Coated Urea</h4>
+                    <p class="text-green-600 font-bold">₹266 / Bag</p>
+                    <button class="w-full mt-2 btn-outline py-1 rounded">Buy Now</button>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition cursor-pointer">
+                    <img src="https://placehold.co/200x200?text=Seeds" class="rounded-lg mb-4 w-full h-40 object-cover">
+                    <h4 class="font-bold">Wheat Seeds (HD 2967)</h4>
+                    <p class="text-green-600 font-bold">₹40 / kg</p>
+                    <button class="w-full mt-2 btn-outline py-1 rounded">Buy Now</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Schemes Section -->
+    <section id="schemes-section" class="hidden min-h-screen bg-gray-50 py-12">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold mb-6">Government Schemes</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+                    <div class="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center text-orange-600 mb-4"><i class="ph-fill ph-bank text-2xl"></i></div>
+                    <h3 class="text-xl font-bold mb-2">PM Kisan Samman Nidhi</h3>
+                    <p class="text-gray-600 text-sm mb-4">Financial benefit of Rs. 6000/- per year.</p>
+                    <button class="text-green-600 font-bold text-sm hover:underline">Apply Now &rarr;</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- Navigation Logic ---
+        function showSection(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            const target = document.getElementById(id + '-section');
+            if(target) {
+                target.classList.remove('hidden');
+                window.scrollTo(0,0);
+            }
+            if(id === 'heatmap') setTimeout(initMap, 100);
+            if(id === 'geotag') getLocation();
+        }
+
+        // --- Image Analysis ---
+        const fileInput = document.getElementById('file-input');
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files[0]) {
+                document.getElementById('preview').src = URL.createObjectURL(e.target.files[0]);
+                document.getElementById('preview').classList.remove('hidden');
+                document.getElementById('analyze-btn').disabled = false;
+            }
+        });
+
+        async function analyzeImage() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('result').classList.add('hidden');
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                // Connect to Python Backend
+                const res = await fetch('/analyze', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                document.getElementById('res-disease').textContent = data.disease;
+                document.getElementById('res-conf').textContent = data.confidence + "% Confidence";
+                document.getElementById('res-treat').textContent = data.treatment;
+                
+                document.getElementById('result').classList.remove('hidden');
+            } catch(e) {
+                alert("Error: " + e.message);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        // --- Map Logic ---
+        let map;
+        function initMap() {
+            if(map) return;
+            map = L.map('map').setView([20.5937, 78.9629], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            // Demo Heatmap Data
+            L.circle([30.9010, 75.8573], {color: 'red', fillColor: '#f03', fillOpacity: 0.5, radius: 50000}).addTo(map).bindPopup("High Rust Risk");
+            L.circle([29.6857, 76.9905], {color: 'orange', fillColor: '#f80', fillOpacity: 0.5, radius: 50000}).addTo(map).bindPopup("Moderate Risk");
+        }
+
+        // --- GeoTag Logic ---
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    document.getElementById('location-display').textContent = 
+                        `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+                });
+            } else {
+                document.getElementById('location-display').textContent = "Geolocation not supported";
+            }
+        }
+    </script>
+</body>
+</html>
