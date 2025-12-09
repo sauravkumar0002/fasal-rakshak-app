@@ -9,10 +9,10 @@ load_dotenv()
 app = Flask(__name__, template_folder='templates')
 
 # 2. Configure Gemini AI (Get key from Google AI Studio)
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "AIzaSyCATTL5gI6OUxNnZlZoZFRLlA5VAw9-yIc")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "AIzaSyCATTL5gl6OUxNnZlZoZFRLlA5VAw9-ylc")
 genai.configure(api_key=GOOGLE_API_KEY)
 
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-pro')
 
 # 3. Routes
 @app.route('/')
