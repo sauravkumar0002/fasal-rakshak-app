@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # 1. Setup Application
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 
 # 2. Configure Gemini AI (Get key from Google AI Studio)
 # For local testing, you can hardcode it here, but for deployment use env vars
