@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, render_template, request, jsonify
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -8,8 +9,7 @@ load_dotenv()
 app = Flask(__name__, template_folder='templates')
 
 # 2. Configure Gemini AI (Get key from Google AI Studio)
-# For local testing, you can hardcode it here, but for deployment use env vars
-GOOGLE_API_KEY = "AIzaSyCATTL5gI6OUxNnZlZoZFRLlA5VAw9-yIc"
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "AIzaSyCATTL5gI6OUxNnZlZoZFRLlA5VAw9-yIc")
 genai.configure(api_key=GOOGLE_API_KEY)
 
 model = genai.GenerativeModel('gemini-1.5-flash')
@@ -32,29 +32,53 @@ def analyze_crop():
         # Read image
         image_data = file.read()
         
+        # Get mime type
+        mime_type = file.content_type or 'image/jpeg'
+        
         # AI Prompt
         prompt = """
         You are an expert plant pathologist. Analyze this crop image.
-        Return a strict JSON object (NO markdown) with these fields:
+        Return ONLY a valid JSON object (no markdown, no code blocks) with these exact fields:
         {
             "disease": "Name of disease or 'Healthy'",
-            "confidence": 95,
+            "confidence": 85,
             "treatment": "One specific chemical or organic treatment.",
             "prevention": "One tip to prevent it next time."
         }
         """
 
-        response = model.generate_content([
-            {'mime_type': file.content_type, 'data': image_data},
-            prompt
-        ])
+        # Create image part for Gemini
+        image_part = {
+            'mime_type': mime_type,
+            'data': image_data
+        }
 
-        # Clean response
-        clean_text = response.text.replace('```json', '').replace('```', '').strip()
-        return clean_text, 200, {'Content-Type': 'application/json'}
+        response = model.generate_content([image_part, prompt])
+        
+        # Clean response - remove any markdown formatting
+        response_text = response.text.strip()
+        response_text = response_text.replace('```json', '').replace('```', '').strip()
+        
+        # Parse to validate JSON and return
+        parsed_response = json.loads(response_text)
+        return jsonify(parsed_response)
 
+    except json.JSONDecodeError as e:
+        app.logger.error(f"JSON Parse Error: {e}, Response: {response_text}")
+        return jsonify({
+            'disease': 'Analysis Error',
+            'confidence': 0,
+            'treatment': 'Could not parse AI response. Please try again.',
+            'prevention': 'Try uploading a clearer image.'
+        }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Error in analyze: {str(e)}")
+        return jsonify({
+            'disease': 'Error',
+            'confidence': 0,
+            'treatment': str(e),
+            'prevention': 'Please check your API key and try again.'
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
